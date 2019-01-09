@@ -87,7 +87,7 @@ static void cliEEInit( int n, char **arg)
 {
     eep.initWiFiParms();    // initializes WiFi parametes
     eep.initUserParms();    
-    eep.saveParms( ALL_PARM_MASK );
+    eep.saveParms( ALL_PARMS );
     RESPONSE("%d bytes saved\r\n", HEAD_SIZE+WIFI_SIZE+eep.USER_SIZE );
 }
 
@@ -106,7 +106,7 @@ static void cliUpdateWiFi( int n, char **arg)
 }
 static void cliUpdatePort( int n, char **arg)
 {
-    eep.fetchParms( WIFIPARM_MASK );
+    eep.fetchParms( WIFI_PARMS );
     
     int port = n>1 ? atoi( arg[1] ) : 80;
     eep.updateWiFiParms( NULL, NULL, NULL, port );
@@ -114,11 +114,11 @@ static void cliUpdatePort( int n, char **arg)
 }
 static void cliUpdateCount( int n, char **arg)
 {
-    eep.fetchParms( HEADPARM_MASK );
+    eep.fetchParms( HEAD_PARMS );
     if( n>1 )
     {
         eep.head.reboots = atoi( arg[1] );
-        eep.saveParms( HEADPARM_MASK );
+        eep.saveParms( HEAD_PARMS );
     }
     RESPONSE( "Reboot Counter=%d\r\n", eep.head.reboots );
 }

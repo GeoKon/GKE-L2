@@ -1,21 +1,26 @@
 //#define EXAMPLE1
 //#define EXAMPLE2
-#define EXAMPLE3
+  #define EXAMPLE3
 
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <nodeClass.h>
-//#include <timeClass.h>  // needed for ModuloSec
-#include <webSupport.h> // needed for initWiFi()
+#include <webSupport.h>     // needed for initWiFi()
+#include <timeClass.h>
 #include "ntpClass.h"
+#include <Ticker.h>         // needed for the time()
 
 char ssid[] = "kontopidis2GHz";  //  your network SSID (name)
 char pass[] = "123456789a";       // your network password
 
 // A UDP instance to let us send and receive packets over UDP
-WiFiUDP udp;
 
-#ifdef EXAMPLE1
+// ----------------------- allocation of base classes -----------------------------
+    Ticker tk;
+    CPU cpu;
+    TIME tm;
+    NTP ntp;
+    WiFiUDP udp;
+
+#ifdef EXAMPLE1 //------------------------------------------------------------------
+
 void setup() 
 {
     cpu.init();
@@ -25,7 +30,7 @@ void setup()
     ntp.init();
     ntp.request();      // get time immediately
 }
-ModuloSec tic( 10 );    // N-sec tic
+ModuloTic tic( 10 );    // N-sec tic
 void loop()
 {
     if( tic.ready() )   // get time on a N-sec tic
@@ -41,9 +46,7 @@ void loop()
 }
 #endif
 
-#ifdef EXAMPLE2
-#include <Ticker.h>         // needed for the time()
-Ticker tk;
+#ifdef EXAMPLE2 //------------------------------------------------------------------
 
 void setup() 
 {
@@ -86,7 +89,7 @@ void setup()
                 ntp.getTime( DAY_MASK ) );
 }
  
-ModuloSec tic( 10 );    // N-sec tic
+ModuloTic tic( 10 );    // N-sec tic
 void loop()
 {
     if( tic.ready() )   // get time on a N-sec tic
@@ -94,14 +97,14 @@ void loop()
 }
 #endif
 
-#ifdef EXAMPLE3
+#ifdef EXAMPLE3 //------------------------------------------------------------------
 void setup() 
 {
     cpu.init();
     initWiFi( ssid, pass );
     initTimeBase( ntp/*Allocated in ntpClass*/, tm/*Allocated in timeClass*/ );
 }
-ModuloSec tic( 10 );    // N-sec tic
+ModuloTic tic( 10 );    // N-sec tic
 void loop()
 {
     if( tic.ready() )   // get time on a N-sec tic
