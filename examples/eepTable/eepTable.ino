@@ -1,26 +1,41 @@
-//#define TEST1         // interactive demo CLI with etables[]
-//#define TEST2         // typical boot with WiFi with no user EEPROM parms
-  #define TEST3         // Includes USER parameters. CLI mode
-  #define TEST3_INIT    // include both to initialize user parms
+//  #define TEST1         // interactive blocking demo CLI in setup() 
+//  #define TEST2         // typical boot with WiFi with no user EEPROM parms
+    #define TEST3         // Includes USER parameters. CLI mode
   
-#include "eepTable.h"   
+#include <cliClass.h>       // CLI and EXE classes. Also includes the cpuClass.h
+#include <eepClass.h>   
+#include "eepTable.h"
+
 #include <FS.h>
 
+// --------------- forward references (in this file) ---------------------------
+
+    extern void interactForever();
+    namespace myTable 
+    {
+        extern void init( EXE &myexe );
+        extern CMDTABLE table[]; 
+    }
 // ------------------- allocation of base classes ------------------------------
     CPU cpu;
     CLI cli;
+    EXE exe;
     EEP eep;
-    Buf rbuf(500);          
-// -----------------------------------------------------------------------------
 
+// -----------------------------------------------------------------------------
 #ifdef TEST1        // primitive boot in CLI to test functionality
 void setup()
 {
     cpu.init();
     SPIFFS.begin();                     // crashes sometimes if not present
+
+     myTable::init( exe );
+    eepTable::init( eep );              // create link to eep tables
+     
+    exe.registerTable(  myTable::table );
+    exe.registerTable( eepTable::table );
     
-    cli.init( ECHO_ON, "cmd: " );    // by default, ECO is OFF
-    interact( &etable[0] );
+    interactForever();
 }
 void loop() 
 {
@@ -44,10 +59,15 @@ void setup()
         eep.saveParms();    
     }
     eep.updateRebootCount();
-    eep.printParms("Current Parms") );                   // print current parms
+    eep.printParms("Current Parms");    // print current parms
 
-    cli.init( ECHO_ON, "cmd: " );       // by default, ECO is OFF
-    interact( &etable[0] );
+     myTable::init( exe );
+    eepTable::init( eep );              // create link to eep tables
+     
+    exe.registerTable(  myTable::table );
+    exe.registerTable( eepTable::table );
+    
+    interactForever();
 }
 void loop() 
 {
@@ -56,9 +76,7 @@ void loop()
 #endif
 
 // -----------------------------------------------------------------------------
-
 #ifdef TEST3                // Includes USER parameters. CLI mode
-
 struct myparm_t
 {
     float x;
@@ -77,23 +95,65 @@ void setup()
     eep.registerUserParms( &myeep, sizeof( myparm_t ), FORMAT );
     eep.registerInitCallBk( [](){ myeep=defaults; } );
 
-#ifdef TEST3_INIT
     if( int err = eep.fetchParms() )    // wifi and user fetch parms
     {
         eep.initWiFiParms();            // initialize with default WiFis
         eep.initUserParms();             
-        // myeep = defaults             // this is an alternative to initUserParms()
         eep.saveParms();    
     }
     eep.updateRebootCount();
-    PF( !eep.getParmString("Current Parms") );                   // print current parms
-#endif
-
-    cli.init( ECHO_ON, "cmd: " );       // by default, ECO is OFF
-    interact( &etable[0] );
+    eep.printParms("Current Parms");    // print current parms
+    
+    myTable::init( exe );
+    eepTable::init( eep );              // create link to eep tables
+     
+    exe.registerTable(  myTable::table );
+    exe.registerTable( eepTable::table );
+    
+    interactForever();
 }
 void loop() 
 {
     yield();
 }
 #endif
+
+// ----------------------------- local CLI tables ---------------------------
+namespace myTable
+{
+    static EXE *exe;
+    void init( EXE &myexe )
+    {
+        exe = &myexe;
+    }
+    void help( int n, char **arg, Buf &bf )     
+    {
+        if( n<=1 ) exe->printTables("");
+        else       exe->printHelp( arg[1] );
+    }
+    CMDTABLE table[]= // must be external to be able to used by the cliSupport
+    {
+        {"h",       "Help! List of all commands",             help     },
+        {NULL, NULL, NULL}
+    };
+}
+
+// -----------------------------------------------------------------------------
+void interactForever()
+{
+    cli.init( ECHO_ON, "cmd: " );       
+    PR("CLI Mode. Press 'h' for help\r\n");
+    
+    cli.prompt();
+    for(;;)
+    {
+        if( cli.ready() )
+        {
+            char *p = cli.gets();
+            //PF("See string %s\r\n", p );
+            exe.dispatch( p );
+            x.print();
+            cli.prompt();
+        }
+    }
+}

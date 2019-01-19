@@ -1,6 +1,6 @@
-//#define EXAMPLE1
+#define EXAMPLE1
 //#define EXAMPLE2
-  #define EXAMPLE3
+//#define EXAMPLE3
 
 #include <webSupport.h>     // needed for initWiFi()
 #include <timeClass.h>
@@ -16,6 +16,7 @@ char pass[] = "123456789a";       // your network password
     Ticker tk;
     CPU cpu;
     TIME tm;
+    INI ini( cpu );    // part of the WebSupport.cpp
     NTP ntp;
     WiFiUDP udp;
 
@@ -24,7 +25,7 @@ char pass[] = "123456789a";       // your network password
 void setup() 
 {
     cpu.init();
-    initWiFi( ssid, pass );
+    ini.wifi( ssid, pass );
 
     PR("Starting UDP");
     ntp.init();

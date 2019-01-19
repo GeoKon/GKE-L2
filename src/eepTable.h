@@ -4,8 +4,10 @@
 #include <cliClass.h>   // includes cpuClass.h. Definition for COMMAND
 #include "eepClass.h"
 
-// ---------- exported symbols ----------------
-
-extern COMMAND etable[];
+namespace eepTable
+{ 
+	extern void init( EEP &myeep );
+	extern CMDTABLE table[];
+}
 
 #endif
