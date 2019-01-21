@@ -10,7 +10,7 @@
 
 // --------------- forward references (in this file) ---------------------------
 
-    extern void interactForever();
+    void interactForever();
     namespace myTable 
     {
         extern void init( EXE &myexe );
@@ -30,7 +30,7 @@ void setup()
     SPIFFS.begin();                     // crashes sometimes if not present
 
      myTable::init( exe );
-    eepTable::init( eep );              // create link to eep tables
+    eepTable::init( exe, eep );         // create link to eep tables
      
     exe.registerTable(  myTable::table );
     exe.registerTable( eepTable::table );
@@ -104,8 +104,8 @@ void setup()
     eep.updateRebootCount();
     eep.printParms("Current Parms");    // print current parms
     
-    myTable::init( exe );
-    eepTable::init( eep );              // create link to eep tables
+     myTable::init( exe );
+    eepTable::init( exe, eep );              // create link to eep tables
      
     exe.registerTable(  myTable::table );
     exe.registerTable( eepTable::table );
@@ -121,19 +121,14 @@ void loop()
 // ----------------------------- local CLI tables ---------------------------
 namespace myTable
 {
-    static EXE *exe;
-    void init( EXE &myexe )
+    static EXE *_exe;       //pointer to EXE class defined in main()
+    
+    void init( EXE &myexe ) {_exe = &myexe;}
+    void help( int n, char *arg[] ) {_exe->help( n, arg );}
+    
+    CMDTABLE table[]= 
     {
-        exe = &myexe;
-    }
-    void help( int n, char **arg, Buf &bf )     
-    {
-        if( n<=1 ) exe->printTables("");
-        else       exe->printHelp( arg[1] );
-    }
-    CMDTABLE table[]= // must be external to be able to used by the cliSupport
-    {
-        {"h",       "Help! List of all commands",             help     },
+        {"h", "Help! List of all commands", help },
         {NULL, NULL, NULL}
     };
 }
@@ -150,9 +145,14 @@ void interactForever()
         if( cli.ready() )
         {
             char *p = cli.gets();
-            //PF("See string %s\r\n", p );
             exe.dispatch( p );
-            x.print();
+
+            PF("--- Repeated ---\r\n");
+            
+            Buf temp(2000);                // response buffer
+            exe.dispatch( p ,&temp );
+            temp.print();
+            
             cli.prompt();
         }
     }
