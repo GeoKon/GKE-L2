@@ -15,13 +15,6 @@ IPAddress	KEYWORD1	EthernetIPAddress
 # Methods and Functions (KEYWORD2)
 #######################################
 
-init	KEYWORD2
-readADC_V	KEYWORD2
-readADC_A	KEYWORD2
-zeroAOffset	KEYWORD2
-calcAmps	KEYWORD2
-calcVolts	KEYWORD2
-
 
 #######################################
 # Constants (LITERAL1)
