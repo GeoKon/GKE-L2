@@ -3,68 +3,70 @@
 
 // ------------------------------- minimal CLI: EEPROM ---------------------------------------
 
-#define DCLBF Buf &bf
-#define RESPONSE Serial.printf
+#define RESPONSE _exe->respond
 
 namespace eepTable
 { 
-	static EEP *ee;
-	void init( EEP &myeep )
+	static EXE *_exe;			// pointer to EXE Class
+	static EEP *_eep;			// pointer to EEPROM parameter structure
+	
+	void init( EXE &myexe, EEP &myeep )
 	{
-		ee = &myeep;
+		_exe = &myexe;
+		_eep = &myeep;
 	}
 	
-	static void cliEEInit( int n, char **arg, DCLBF )
+	static void cliEEInit( int n, char **arg )
 	{
-		ee->initWiFiParms();    // initializes WiFi parametes
-		ee->initUserParms();    
-		ee->saveParms( ALL_PARMS );
-		RESPONSE("%d bytes saved\r\n", HEAD_SIZE+WIFI_SIZE+ee->USER_SIZE );
+		_eep->initWiFiParms();    // initializes WiFi parametes
+		_eep->initUserParms();    
+		_eep->saveParms( ALL_PARMS );
+		RESPONSE("%d bytes saved\r\n", HEAD_SIZE+WIFI_SIZE+_eep->USER_SIZE );
 	}
-	static void cliUpdateWiFi( int n, char **arg, DCLBF)
+	static void cliUpdateWiFi( int n, char **arg )
 	{
 		if( n>1 )
-			ee->updateWiFiParms( arg[1], ee->wifi.pwd, ee->wifi.stIP, ee->wifi.port );
+			_eep->updateWiFiParms( arg[1], _eep->wifi.pwd, _eep->wifi.stIP, _eep->wifi.port );
 		if( n>2 )
-			ee->updateWiFiParms( arg[1], arg[2], ee->wifi.stIP, ee->wifi.port );
+			_eep->updateWiFiParms( arg[1], arg[2], _eep->wifi.stIP, _eep->wifi.port );
 		if( n>3 )
-			ee->updateWiFiParms( arg[1], arg[2], arg[3], ee->wifi.port );
+			_eep->updateWiFiParms( arg[1], arg[2], arg[3], _eep->wifi.port );
 		if( n>4 )    
-			ee->updateWiFiParms( arg[1], arg[2], arg[3], atoi( arg[4] ) );
+			_eep->updateWiFiParms( arg[1], arg[2], arg[3], atoi( arg[4] ) );
 		
-		RESPONSE("SSID=%s, PWD=%s, StaticIP=%s, port=%d\r\n", ee->wifi.ssid, ee->wifi.pwd, ee->wifi.stIP, ee->wifi.port );
+		RESPONSE("SSID=%s, PWD=%s, StaticIP=%s, port=%d\r\n", _eep->wifi.ssid, _eep->wifi.pwd, _eep->wifi.stIP, _eep->wifi.port );
 	}
-	static void cliUpdatePort( int n, char **arg, DCLBF)
+	static void cliUpdatePort( int n, char **arg )
 	{
-		ee->fetchParms( WIFI_PARMS );
+		_eep->fetchParms( WIFI_PARMS );
 		
 		int port = n>1 ? atoi( arg[1] ) : 80;
-		ee->updateWiFiParms( NULL, NULL, NULL, port );
-		RESPONSE( "Port=%d\r\n", ee->wifi.port );
+		_eep->updateWiFiParms( NULL, NULL, NULL, port );
+		RESPONSE( "Port=%d\r\n", _eep->wifi.port );
 	}
-	static void cliUpdateCount( int n, char **arg, DCLBF)
+	static void cliUpdateCount( int n, char **arg )
 	{
-		ee->fetchParms( HEAD_PARMS );
+		_eep->fetchParms( HEAD_PARMS );
 		if( n>1 )
 		{
-			ee->head.reboots = atoi( arg[1] );
-			ee->saveParms( HEAD_PARMS );
+			_eep->head.reboots = atoi( arg[1] );
+			_eep->saveParms( HEAD_PARMS );
 		}
-		RESPONSE( "Reboot Counter=%d\r\n", ee->head.reboots );
+		RESPONSE( "Reboot Counter=%d\r\n", _eep->head.reboots );
 	}
-	static void cliHealth( int n, char **arg, DCLBF)
+	static void cliHealth( int n, char **arg )
 	{
-		RESPONSE( "Rebooted %d times\r\n", ee->head.reboots );
+		RESPONSE( "Rebooted %d times\r\n", _eep->head.reboots );
 		//RESPONSE( "Heap used=%d, max=%d\r\n", cpu.heapUsedNow(), cpu.heapUsedMax() );
 	}
 
-	static void cliEEDump( int n, char **arg, DCLBF)     // edump base [N]
+	static void cliEEDump( int n, char **arg )     // edump base [N]
 	{
 		int base = (n>1) ? atoi( arg[1] ) : 0;
-		int    N = (n>2) ? atoi( arg[2] ) : HEAD_SIZE + WIFI_SIZE + ee->USER_SIZE;
+		int    N = (n>2) ? atoi( arg[2] ) : HEAD_SIZE + WIFI_SIZE + _eep->USER_SIZE;
 
 		// prints a list of memory locations in HEX or ASCII.
-		EEPROM.begin( HEAD_SIZE + WIFI_SIZE + ee->USER_SIZE );
+		EEPROM.begin( HEAD_SIZE + WIFI_SIZE + _eep->USER_SIZE );
 		int i;
 		char c;
 		
@@ -82,15 +84,15 @@ namespace eepTable
 			RESPONSE("\r\n");
 		EEPROM.end();
 	}
-	static void cliEEZero( int n, char **arg, DCLBF)     // edump base [N]
+	static void cliEEZero( int n, char **arg )     // edump base [N]
 	{
 		// prints a list of memory locations in HEX or ASCII.
-		EEPROM.begin( HEAD_SIZE + WIFI_SIZE + ee->USER_SIZE );
+		EEPROM.begin( HEAD_SIZE + WIFI_SIZE + _eep->USER_SIZE );
 		int i, j;
 		char c = 0;
 		
 		j = HEAD_SIZE;
-		for( i=0; i<WIFI_SIZE+ee->USER_SIZE; i++ )
+		for( i=0; i<WIFI_SIZE+_eep->USER_SIZE; i++ )
 			EEPROM.put( j++, c ); 
 		RESPONSE("All WiFi and User Parms Zeroed\r\n");
 		EEPROM.end();
@@ -101,7 +103,7 @@ namespace eepTable
 		RESPONSE( "%s requires at least %d arguments", name, n);
 	}
 	// DIAGNOSTICS OF EEPROM
-	static void cliEEPut( int n, char **arg, DCLBF)     // eset base value8bit
+	static void cliEEPut( int n, char **arg )     // eset base value8bit
 	{
 		if( n<=2 )
 		{synerr( arg[0], 2 ); return;}
@@ -109,28 +111,28 @@ namespace eepTable
 		int addr = atoi( arg[1] );
 		char patt = atoi( arg[2] );
 
-		EEPROM.begin( HEAD_SIZE+WIFI_SIZE+ee->USER_SIZE );
+		EEPROM.begin( HEAD_SIZE+WIFI_SIZE+_eep->USER_SIZE );
 		EEPROM.put( addr, patt );
 		EEPROM.end();  
 	}    
-	static void cliPrintParms( int n, char **arg, DCLBF)     // define
+	static void cliPrintParms( int n, char **arg )     // define
 	{
 		int select = (n>1)? atoi(arg[1]) : 0xF;
-		RESPONSE( !ee->getParmString( "", (select_t) select ) );
+		RESPONSE( !_eep->getParmString( "", (select_t) select ) );
 	}
-	static void cliSaveParms( int n, char **arg, DCLBF)     
+	static void cliSaveParms( int n, char **arg )     
 	{
 		int select = (n>1)? atoi(arg[1]) : 0xF;
-		ee->saveParms( (select_t) select );
+		_eep->saveParms( (select_t) select );
 	}
-	static void cliFetchParms( int n, char **arg, DCLBF )     
+	static void cliFetchParms( int n, char **arg )     
 	{
 		int select = (n>1)? atoi(arg[1]) : 0xF;
-		int error = ee->fetchParms( (select_t) select );
+		int error = _eep->fetchParms( (select_t) select );
 		RESPONSE("Fetch error=%d\r\n", error);
 	}
 
-	static void help( int n, char **arg, DCLBF )     
+	static void help( int n, char **arg )     
 	{
 		RESPONSE("EEPROM commands\r\n");
 	}
@@ -144,7 +146,7 @@ namespace eepTable
 		{"ewifi",   "[ssid] [pwd] [staticIP] [port]. Updates EEPROM WiFi parms",  cliUpdateWiFi },
 		{"eport",   "port. Updates EEPROM port. Reboot!",                         cliUpdatePort },
 		{"einit",   "Initializes parameters and writes them to EEPROM",             cliEEInit },
-		{"ebcount", "[value] prints or sets reboot counter. Writes to EEPROM",      cliUpdateCount },
+		{"bcount",  "[value] prints or sets reboot counter. Writes to EEPROM",      cliUpdateCount },
 
 	// changes to structures only
 		{"eprint",  "[selection]. Prints all parameters", cliPrintParms },

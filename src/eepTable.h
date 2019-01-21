@@ -6,7 +6,7 @@
 
 namespace eepTable
 { 
-	extern void init( EEP &myeep );
+	extern void init( EXE &myexe, EEP &myeep );
 	extern CMDTABLE table[];
 }
 
