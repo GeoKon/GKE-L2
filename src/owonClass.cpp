@@ -146,7 +146,8 @@ bool OWON::extract()
 }
 
 // get floating value based on "scancmd" 
-float OWON::getValue()
+// full scale count is 6000
+float OWON::getValue( bool notscaled )
 {
     // Extract and convert measurement value
     float measurement;
@@ -155,6 +156,8 @@ float OWON::getValue()
     else 
         measurement = -1 * (float)(resp16[2] & 0x7fff);
 
+	if( notscaled )
+		return measurement;
     switch( decimal )
     {
         case 0:
@@ -319,7 +322,6 @@ char * OWON::getACDC()
     }
     return stype;
 }
-
 int OWON::error()
 {
     return err;

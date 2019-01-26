@@ -53,7 +53,7 @@ public:
 
     void simulate( bool onoff, float value=0.0 ); 
     
-    float getValue();
+    float getValue( bool notscaled=false );
     char *getValueText();
     char *getUnits( bool ascii=false );
     char *getACDC();
