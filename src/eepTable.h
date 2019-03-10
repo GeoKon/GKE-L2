@@ -2,11 +2,11 @@
 #define EEPTABLE_H
 
 #include <cliClass.h>   // includes cpuClass.h. Definition for COMMAND
-#include "eepClass.h"
+#include <eepClass.h>
 
 namespace eepTable
 { 
-	extern void init( EXE &myexe, EEP &myeep );
+	extern void init( EXE &myexe, EEP &myeep);
 	extern CMDTABLE table[];
 }
 
