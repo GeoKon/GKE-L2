@@ -1,7 +1,10 @@
-//  #define TEST1         // interactive blocking demo CLI in setup() 
-//  #define TEST2         // typical boot with WiFi with no user EEPROM parms
-    #define TEST3         // Includes USER parameters. CLI mode
-  
+#define TEST 2
+/*                SELECTION OF TESTS 
+ * 
+ * 1 = interactive blocking demo CLI in setup() 
+ * 2 = typical boot with WiFi with no user EEPROM parms
+ * Use the eepGlobals.ino to test user+eep parameters
+*/
 #include <cliClass.h>       // CLI and EXE classes. Also includes the cpuClass.h
 #include <eepClass.h>   
 #include "eepTable.h"
@@ -11,7 +14,7 @@
 // --------------- forward references (in this file) ---------------------------
 
     void interactForever();
-    namespace myTable 
+    namespace mypTable 
     {
         extern void init( EXE &myexe );
         extern CMDTABLE table[]; 
@@ -23,109 +26,66 @@
     EEP eep;
 
 // -----------------------------------------------------------------------------
-#ifdef TEST1        // primitive boot in CLI to test functionality
+#if TEST == 1        // primitive boot in CLI to test functionality
 void setup()
 {
     cpu.init();
     SPIFFS.begin();                     // crashes sometimes if not present
+    PF("This is test #%d\r\n", TEST );
+    
+    mypTable::init( exe );              // use namespace 'myTable' to associate the exe class
+    eepTable::init( exe, eep );         // use namespace 'eepTable' to associate the eep tables
+     
+    exe.registerTable( mypTable::table );
+    exe.registerTable( eepTable::table );
+    
+    interactForever();
+}
+#endif
 
-     myTable::init( exe );
+// -----------------------------------------------------------------------------
+#if TEST == 2        // typical boot with WiFi with no user EEPROM parms
+
+#define myMAGIC 0x1234
+void setup()
+{
+    cpu.init();
+    SPIFFS.begin();  
+    PF("This is test #%d\r\n", TEST );
+    
+    if( !eep.checkEEParms( myMAGIC, 0 ) )    // fetches parameters and returns TRUE or FALSE
+    {
+        PF("Initializing parms!\r\n" );
+        eep.initHeadParms( myMAGIC, 0 );
+        eep.initWiFiParms();            // initialize with default WiFis
+    }
+    eep.incrBootCount();
+    eep.printHeadParms("--- Current Parms");    // print current parms
+    eep.printWiFiParms();                 
+    
     eepTable::init( exe, eep );         // create link to eep tables
+    mypTable::init( exe );               // create link to MY table
      
-    exe.registerTable(  myTable::table );
+    exe.registerTable( mypTable::table );
     exe.registerTable( eepTable::table );
     
     interactForever();
 }
+#endif
+
 void loop() 
 {
     yield();
 }
-#endif
-
-// -----------------------------------------------------------------------------
-#ifdef TEST2        // typical boot with WiFi with no user EEPROM parms
-void setup()
-{
-    cpu.init();
-    SPIFFS.begin();                     // crashes sometimes if not present
-    
-    int err = eep.fetchParms();          // fetch parms
-    if( err )
-    {
-        PF("Initalizing parms (code %d)!\r\n", err );
-
-        eep.initWiFiParms();            // initialize with default WiFis
-        eep.saveParms();    
-    }
-    eep.updateRebootCount();
-    eep.printParms("Current Parms");    // print current parms
-
-     myTable::init( exe );
-    eepTable::init( eep );              // create link to eep tables
-     
-    exe.registerTable(  myTable::table );
-    exe.registerTable( eepTable::table );
-    
-    interactForever();
-}
-void loop() 
-{
-    yield();
-}
-#endif
-
-// -----------------------------------------------------------------------------
-#ifdef TEST3                // Includes USER parameters. CLI mode
-struct myparm_t
-{
-    float x;
-    int n;
-    char test[16];
-    int i;
-} myeep, defaults = {2.3, 10, "nothing", 45};
-
-#define FORMAT "USER PARMS\r\n%f %d %s %d\r\n"
-    
-void setup()
-{
-    cpu.init();
-    SPIFFS.begin();                     // crashes sometimes if not present
-
-    eep.registerUserParms( &myeep, sizeof( myparm_t ), FORMAT );
-    eep.registerInitCallBk( [](){ myeep=defaults; } );
-
-    if( int err = eep.fetchParms() )    // wifi and user fetch parms
-    {
-        eep.initWiFiParms();            // initialize with default WiFis
-        eep.initUserParms();             
-        eep.saveParms();    
-    }
-    eep.updateRebootCount();
-    eep.printParms("Current Parms");    // print current parms
-    
-     myTable::init( exe );
-    eepTable::init( exe, eep );              // create link to eep tables
-     
-    exe.registerTable(  myTable::table );
-    exe.registerTable( eepTable::table );
-    
-    interactForever();
-}
-void loop() 
-{
-    yield();
-}
-#endif
 
 // ----------------------------- local CLI tables ---------------------------
-namespace myTable
+namespace mypTable
 {
     static EXE *_exe;       //pointer to EXE class defined in main()
     
     void init( EXE &myexe ) {_exe = &myexe;}
     void help( int n, char *arg[] ) {_exe->help( n, arg );}
-    
+
     CMDTABLE table[]= 
     {
         {"h", "Help! List of all commands", help },
@@ -145,12 +105,11 @@ void interactForever()
         if( cli.ready() )
         {
             char *p = cli.gets();
-            exe.dispatch( p );
-
-            PF("--- Repeated ---\r\n");
+//            exe.dispatchConsole( p );
+//            PF("--- Repeated ---\r\n");
             
-            Buf temp(2000);                // response buffer
-            exe.dispatch( p ,&temp );
+            BUF temp(2000);                // response buffer
+            exe.dispatchBuf( p, temp );
             temp.print();
             
             cli.prompt();
