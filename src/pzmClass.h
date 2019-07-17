@@ -1,5 +1,4 @@
-#ifndef PZMCLASS_H
-#define PZMCLASS_H
+#pragma once
 
 #include <cpuClass.h>
 #include <oledClass.h>  // needed for diagnostics only
@@ -108,4 +107,3 @@ public:
 extern PZEM pzem;
 extern PZM4 pzm4;
 
-#endif

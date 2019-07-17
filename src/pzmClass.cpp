@@ -1,5 +1,6 @@
-//#include <oledClass.h>
+#include <oledClass.h>
 #include "pzmClass.h"
+extern OLED oled;
 
 //#ifndef pzem_allocated		// class allocation, if not allready done so.
 //	PzemClass pzem;

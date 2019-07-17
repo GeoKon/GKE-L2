@@ -1,4 +1,6 @@
+#include "oledClass.h"
 #include "owonClass.h"
+extern OLED oled;
 
 void OWON::init( uint32 timeout, int pbaud, int sbaud, int oe )
 {

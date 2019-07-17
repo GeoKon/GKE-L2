@@ -1,5 +1,4 @@
-#ifndef OWONCLASS_H
-#define OWONCLASS_H
+#pragma once
 
 #include <cpuClass.h>
 #include <oledClass.h>  // for diagnostics
@@ -66,6 +65,3 @@ public:
     int readMeter();
 };
 
-extern OWON owon;
-    
-#endif

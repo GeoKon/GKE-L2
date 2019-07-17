@@ -11,7 +11,7 @@ void NTP::init()
     unsigned int localPort = 2390;      // local port to listen for UDP packets
 
     udp.begin(localPort);
-    PN( "Local port: "); PR( udp.localPort());
+    PR( "Local port: "); PRN( udp.localPort());
 
     state = false;      // request not pending
 }
@@ -27,7 +27,7 @@ void NTP::request()
     //get a random server from the pool
     WiFi.hostByName(ntpServerName, timeServerIP);
     
-    PR("Sending NTP packet...");
+    PRN("Sending NTP packet...");
     // set all bytes in the buffer to 0
     memset(packetBuffer, 0, NTP_PACKET_SIZE);
     
@@ -36,7 +36,7 @@ void NTP::request()
     packetBuffer[0] = 0b11100011;   // LI, Version, Mode
     packetBuffer[1] = 0;     // Stratum, or type of clock
     packetBuffer[2] = 6;     // Polling Interval
-    packetBuffer[3] = 0xEC;  // Peer Clock Precision
+    packetBuffer[3] = 0xEC;  // Peer Clock PRNecision
     // 8 bytes of zero for Root Delay & Root Dispersion
     packetBuffer[12]  = 49;
     packetBuffer[13]  = 0x4E;
@@ -61,12 +61,12 @@ bool NTP::ready()
     int cb = udp.parsePacket();         // request sent but packet not received
     if (!cb) 
     {
-        //PR("no packet yet");
+        //PRN("no packet yet");
         return false;
     }
     else 
     {
-        //PN("packet received, length=");PR(cb);
+        //PR("packet received, length=");PRN(cb);
         // We've received a packet, read the data from it
 
         udp.read(packetBuffer, NTP_PACKET_SIZE);    // read the packet into the buffer
@@ -93,7 +93,7 @@ uint32_t NTP::getUnixTime()
         const unsigned long seventyYears = 2208988800UL;
         // subtract seventy years:
         unsigned long epoch = secsSince1900 - seventyYears;
-        // print Unix time:
+        // PRNint Unix time:
         // PF("Unix time = %d\r\n", epoch);
 
         return unixtime = epoch;
@@ -180,10 +180,10 @@ void initTimeBase( NTP &mytp, TIME &mytt )
     mytp.request();                          // request NTP time
     while( !mytp.ready() )
     {
-        PN(".");
+        PR(".");
         delay( 500 );
     }
-    PR("");
+    PRN("");
     mytp.getUnixTime();
     int *p=mytp.getDateTime();
     PF( "NTP Time %02d:%02d:%02d %2d/%2d/%d\r\n", 
