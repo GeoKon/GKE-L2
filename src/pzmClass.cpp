@@ -65,7 +65,7 @@ bool PZEM::ready()
 			{
 				byte x = Serial.read();
                 if( debugv )
-                    oled.dsp( 7, 0, "\a%02x", x );
+                    oled.dsp( 7, "\a%02x", x );
 
 				if( x == (0xA0 + cmdindx) )
 				{
@@ -94,7 +94,7 @@ bool PZEM::ready()
 					if( rcv_count >= 7 )
 					{						
 						if( debugv )
-							oled.dsp( 3, 0, "%-8s", getValueText() );
+							oled.dsp( 3, "%-8s", getValueText() );
 						err = 0;                        
 						state/* next */ = PZ_DONE;
 					}

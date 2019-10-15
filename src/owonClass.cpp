@@ -48,7 +48,7 @@ bool OWON::ready( bool debug )
 					if( rcv_count >= MAX_RESP )
 					{						
 						if( debug )
-							oled.dsp( 3, 0, "%-8s", "Done" /*getValueText()*/ );
+							oled.dsp( 3, "%-8s", "Done" /*getValueText()*/ );
 						
 						if( extract() ) // flip to 16-bits
 						    err = 0;
